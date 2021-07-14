@@ -32,6 +32,7 @@ public class mp3 extends Application{
     int height = 800;
 
     ObservableList<String> contents= FXCollections.observableArrayList();
+    
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -47,8 +48,6 @@ public class mp3 extends Application{
 
         HBox details = new HBox(artist, dash, songname);
         details.setSpacing(20);
-
-        
 
         Button AddSong = new Button("Add Song");
         AddSong.setOnAction(a -> AddSong(artist, songname));
@@ -159,23 +158,9 @@ public class mp3 extends Application{
     }
 
     void runExe(){
-        BufferedWriter fileOut;
-
-        String itsFileLocation = "C:\\Users\\markr\\Desktop\\Python\\";
-        System.out.println(itsFileLocation);
-        try {
-            fileOut = new BufferedWriter(new FileWriter("C:\\Users\\markr\\Desktop\\Python\\mp3.bat"));
-            fileOut.write("cd\\"+"\n");
-            fileOut.write("cd "+ itsFileLocation +"\n");
-            fileOut.write("mp3.exe"+"\n");
-            fileOut.write("exit"+"\n");
-            fileOut.close(); // Close the output stream after all output is done.
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        } // Create the Buffered Writer object to write to a file called filename.txt
         Runtime runtime = Runtime.getRuntime();
         try {
-            runtime.exec("cmd /c start C:\\Users\\markr\\Desktop\\Python\\mp3.bat");
+            runtime.exec("cmd /c start /min cmd /c mp3.exe");
         } catch (IOException e) {
             e.printStackTrace();
         }

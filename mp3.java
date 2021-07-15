@@ -8,22 +8,32 @@ import java.io.IOException;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 
 public class mp3 extends Application{
@@ -33,7 +43,6 @@ public class mp3 extends Application{
 
     ObservableList<String> contents= FXCollections.observableArrayList();
     
-
     @Override
     public void start(Stage stage) throws Exception {
         TextField artist = new TextField();
@@ -57,7 +66,10 @@ public class mp3 extends Application{
         Button deleteSongs = new Button("Delete All Songs in List");
         deleteSongs.setOnAction(b -> deleteAllSongs(contents));
 
-        HBox fileControl = new HBox(AddSong, deleteSongs);
+        Button addFile = new Button("Add Text File");
+        addFile.setOnAction(f -> dragFile(stage));
+
+        HBox fileControl = new HBox(AddSong, deleteSongs, addFile);
         fileControl.setSpacing(20);
         fileControl.setAlignment(Pos.CENTER);
 
@@ -65,7 +77,7 @@ public class mp3 extends Application{
         CreatePlaylist.setAlignment(Pos.CENTER);
         CreatePlaylist.setOnAction(e -> createPlaylist(PlaylistName));
 
-        readTo(contents);
+        readTo(contents, "songs.txt");
 
         ListView<String> songlist = new ListView<String>();
         songlist.setItems(contents);
@@ -92,9 +104,67 @@ public class mp3 extends Application{
         stage.show();
     }
 
-    private void readTo(ObservableList<String> contents) {
+    private void dragFile(Stage stage) {
+        
+        Label instr = new Label("Drag a text file here.");
+        Label dragged = new Label("");
+        VBox file = new VBox(instr, dragged);
+        file.setBackground(new Background(new BackgroundFill(Color.valueOf("seagreen"), new CornerRadii(20), new Insets(0))));
+        file.setBorder(new Border(new BorderStroke(Color.valueOf("Lightblue"), BorderStrokeStyle.SOLID, new CornerRadii(10), new BorderWidths(3))));
+        file.setPadding(new Insets(20));
+
+
+        file.setOnDragOver(new EventHandler<DragEvent>(){
+            @Override
+            public void handle(DragEvent d) {
+                if(d.getGestureSource() != file && d.getDragboard().hasFiles()) {
+                    d.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                }
+                d.consume();
+            }
+        });
+
+        
+        Popup drag = new Popup();
+        
+        drag.getContent().addAll(file);
+        drag.show(stage);
+        drag.setHideOnEscape(true);
+        
+
+        file.setOnDragDropped(new EventHandler<DragEvent>(){
+            @Override
+            public void handle(DragEvent d) {
+                Dragboard db = d.getDragboard();
+                boolean done = false;
+                if(db.hasFiles()){
+                    if(!contents.isEmpty()){
+                        contents.clear();
+                    }
+                    try (FileReader fr = new FileReader(db.getFiles().get(0).toString());
+                        FileWriter fw = new FileWriter("songs.txt");) {
+                        int c = fr.read();
+                        while(c!=-1) {
+                            fw.write(c);
+                            c = fr.read();
+                        }
+                        
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                readTo(contents, "songs.txt");
+                d.setDropCompleted(done);
+                d.consume();
+                
+                drag.hide();
+            }
+        });
+    }
+
+    private void readTo(ObservableList<String> contents, String fileName) {
         try{
-            BufferedReader reader = new BufferedReader(new FileReader("songs.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
             String line;
             while((line = reader.readLine()) != null){
                 contents.add(line);
@@ -121,7 +191,7 @@ public class mp3 extends Application{
             e.printStackTrace();
         }finally{
             contents.clear();
-            readTo(contents);
+            readTo(contents, "songs.txt");
         }
     }
     void createPlaylist(TextField name){

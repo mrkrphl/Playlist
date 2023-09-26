@@ -40,9 +40,11 @@ public class mp3 extends Application{
 
     int width = 700;
     int height = 800;
+    int count = 0;
 
     ObservableList<String> contents= FXCollections.observableArrayList();
-    
+    Button CreatePlaylist = new Button("Create Playlist");
+
     @Override
     public void start(Stage stage) throws Exception {
         TextField artist = new TextField();
@@ -73,7 +75,7 @@ public class mp3 extends Application{
         fileControl.setSpacing(20);
         fileControl.setAlignment(Pos.CENTER);
 
-        Button CreatePlaylist = new Button("Create Playlist");
+        
         CreatePlaylist.setAlignment(Pos.CENTER);
         CreatePlaylist.setOnAction(e -> createPlaylist(PlaylistName));
 
@@ -176,6 +178,7 @@ public class mp3 extends Application{
     }
 
     void AddSong(TextField artist, TextField songname){
+        count += 1;
         String data = artist.getText() + " - " + songname.getText() + "\n";
         try{
             File songs = new File("songs.txt");
@@ -210,9 +213,11 @@ public class mp3 extends Application{
         runExe();
         Alert alert= new Alert(AlertType.INFORMATION);
         alert.setTitle("Plalyist Creation");
-        alert.setHeaderText("Playlist Created!");
-        alert.setContentText("Your playlist is now saved to your Desktop!");
+        alert.setHeaderText("Creating Playlist!");
+        alert.setContentText("Your playlist is being saved!\nPlease wait...");
+        alert.dialogPaneProperty().get().disableProperty().set(true);
         alert.showAndWait();
+        checkDir(data, alert);
     }
 
     void deleteAllSongs(ObservableList<String> contents){
@@ -230,10 +235,32 @@ public class mp3 extends Application{
     void runExe(){
         Runtime runtime = Runtime.getRuntime();
         try {
-            runtime.exec("cmd /c start /min cmd /c mp3.exe");
-        } catch (IOException e) {
+            String[] commands = {"mp3.exe"};
+            runtime.exec(commands);
+            Thread.sleep((count+1)*10 * 1000);
+        } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    void checkDir(String name, Alert alert){
+        File dir = new File(name);
+        while(!dir.exists()){
+            try{
+                Thread.sleep(1000);
+                CreatePlaylist.disableProperty().set(true);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+                
+        }
+        alert.close();
+        alert.dialogPaneProperty().get().disableProperty().set(false);
+        CreatePlaylist.disableProperty().set(false);
+        alert.setContentText("Your playlist is saved to the directory \"" + dir + "\"");
+        alert.setHeaderText("Playlist Created!");
+        alert.showAndWait();
+        
     }
 
     public static void main(String[] args) {
